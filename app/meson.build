@@ -1,0 +1,6 @@
+subdir('direct_spill_impl')
+# subdir('spdk_spill_impl')
+subdir('offload_server')
+subdir('naive_offload_server')
+subdir('naive_offload_serde_server')
+subdir('pipeline_offload_server')

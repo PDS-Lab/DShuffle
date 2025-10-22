@@ -1,0 +1,51 @@
+# DShuffle: DPU-Optimized Shuffle Framework for Large-scale Data Processing
+
+## Abstract
+
+Shuffle is a crucial operation in distributed data processing, responsible for transferring intermediate data between nodes. However, it is highly resource-intensive, consuming significant CPU power and often becoming a major performance bottleneck, particularly in data analysis tasks involving large datasets.
+
+In this paper, we introduce DShuffle, an efficient framework that leverages DPUs to offload and accelerate shuffle operations. The DPU, with its specialized compute and I/O hardware, is ideally suited for offloading on-path shuffle tasks. However, its complex architecture requires careful design for effective offloading. To fully harness the DPU’s capabilities, DShuffle divides the shuffle process into three stages: serialization, preprocessing, and I/O, and organizes them in a pipelined manner for efficient execution on the DPU. By leveraging high-concurrency memory access units to accelerate the serialization phase and using the DPU to directly write intermediate data to disk, DShuffle effectively accelerates the shuffle process and eliminates unnecessary data copies. Our experiments on a real DPU platform with industrial-grade Spark demonstrate that DShuffle enhances both host CPU and I/O efficiency and effectively reduce Spark task completion times.
+
+## Dependencies
+
+- Hardware
+
+    - At least two compute machines with NVIDIA BlueField-3 DPU and SSD
+    
+    - At least one storage machine with employed HDFS with SSD
+
+- Software
+
+    - OS: Ubuntu 22.04 LTS
+
+    - Compilation:
+    
+        - Language: C++20 Java8
+
+        - LLVM: 17
+
+        - Java: JDK 8u352-b8
+
+        - Libraries:
+            
+            - DOCA 2.9 (including rdma comch dpa dma modules) JNI glaze dbg zpp_bits boost.Fiber args SPSCQueue MPMCQueue 
+
+    - Deploy:
+
+        - JRE: 8u352-b08 x64 & aarch64
+
+        - Python 2.7 for HiBench 7.1.1
+
+        - Spark 2.4.3
+
+        - Hadoop 2.7.7
+
+## Compile & Deploy
+
+- make with meson and maven on both HOST and DPU
+
+- copy the target jar into spark home
+
+- start server on DPU 
+
+- start spark worker via hibench workload

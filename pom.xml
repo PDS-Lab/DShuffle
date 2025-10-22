@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>pdsl</groupId>
+    <artifactId>dpx</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openjdk.jol</groupId>
+            <artifactId>jol-core</artifactId>
+            <version>0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>1.37</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>1.37</version>
+        </dependency>
+        <dependency>
+            <groupId>com.esotericsoftware</groupId>
+            <artifactId>kryo</artifactId>
+            <version>5.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.caucho</groupId>
+            <artifactId>hessian</artifactId>
+            <version>4.0.60</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <forkMode>always</forkMode>
+                    <!-- <environmentVariables>
+                        <LD_PRELOAD>${project.build.directory}/hook/libhook_mmap.so</LD_PRELOAD>
+                    </environmentVariables> -->
+                    <environmentVariables>
+                        <LD_LIBRARY_PATH>
+                            ${project.basedir}/src/main/resources/native/lib
+                        </LD_LIBRARY_PATH>
+                    </environmentVariables>
+                    <argLine>
+                        -XX:+UnlockDiagnosticVMOptions -XX:+PrintCompressedOopsMode
+                        -XX:MaxMetaspaceSize=2g -XX:MetaspaceSize=2g
+                        -XX:CompressedClassSpaceSize=1g -Xms29g -Xmx29g -XX:HeapBaseMinAddress=2g
+                    </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.7.1</version>
+                <configuration>
+                    <!-- <archive>
+                        <manifest>
+                            <mainClass>pdsl.dpx.Main</mainClass>
+                        </manifest>
+                    </archive> -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <?m2e execute onConfiguration?>
+                        <id>generate-dpx-native-header</id>
+                        <phase>compile</phase>
+                        <configuration>
+                            <target name="generate-dpx-native-header">
+                                <echo>Generate SD Native Header</echo>
+                                <exec executable="javah">
+                                    <arg value="-cp" />
+                                    <arg value="${project.build.outputDirectory}" />
+                                    <arg value="-o" />
+                                    <arg value="${project.basedir}/lib/native/sd_native.hxx" />
+                                    <arg value="pdsl.dpx.SD" />
+                                </exec>
+                                <exec executable="javah">
+                                    <arg value="-cp" />
+                                    <arg value="${project.build.outputDirectory}" />
+                                    <arg value="-o" />
+                                    <arg value="${project.basedir}/lib/native/trans_native.hxx" />
+                                    <arg value="pdsl.dpx.TransEnv" />
+                                </exec>
+                                <exec executable="javah">
+                                    <arg value="-cp" />
+                                    <arg value="${project.build.outputDirectory}" />
+                                    <arg value="-o" />
+                                    <arg
+                                        value="${project.basedir}/lib/native/naive_trans_native.hxx" />
+                                    <arg value="pdsl.dpx.NaiveTransEnv" />
+                                </exec>
+                                <exec executable="javah">
+                                    <arg value="-cp" />
+                                    <arg value="${project.build.outputDirectory}" />
+                                    <arg value="-o" />
+                                    <arg
+                                        value="${project.basedir}/lib/native/pipeline_trans_native.hxx" />
+                                    <arg value="pdsl.dpx.PipelineTransEnv" />
+                                </exec>
+                                <exec executable="javah">
+                                    <arg value="-cp" />
+                                    <arg value="${project.build.outputDirectory}" />
+                                    <arg value="-o" />
+                                    <arg value="${project.basedir}/lib/native/serde_native.hxx" />
+                                    <arg value="pdsl.dpx.Serde" />
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <?m2e execute onConfiguration?>
+                        <id>build-dpx</id>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target name="build-dpx">
+                                <echo>Build SD</echo>
+                                <exec executable="meson">
+                                    <env key="CC" value="clang" />
+                                    <env key="CXX" value="clang++" />
+                                    <arg value="setup" />
+                                    <arg
+                                        value="--prefix=${project.basedir}/src/main/resources/native" />
+                                    <arg value="--libdir=lib" />
+                                    <arg value="${project.basedir}/build" />
+                                </exec>
+                                <exec executable="meson">
+                                    <arg value="compile" />
+                                    <arg value="-C" />
+                                    <arg value="${project.basedir}/build" />
+                                    <arg value="-v" />
+                                </exec>
+                                <exec executable="meson">
+                                    <arg value="install" />
+                                    <arg value="-C" />
+                                    <arg value="${project.basedir}/build" />
+                                    <arg value="--skip-subprojects" />
+                                </exec>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
